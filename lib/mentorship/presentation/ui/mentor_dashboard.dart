@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:impact_mentor/mentorship/presentation/utils/app_colors.dart';
 import 'package:impact_mentor/mentorship/presentation/utils/customBox.dart';
@@ -83,7 +82,7 @@ class _MentorDashboardState extends State<MentorDashboard> {
                       controller: controller,
                       decoration: InputDecoration(
                           border: InputBorder.none,
-                          suffixIcon: Image.asset("assets/images/filter.png"),
+                          // suffixIcon: Image.asset("assets/images/filter.png"),
                           hintText: "Search Courses",
                           hintStyle:
                               AppStyles().hintColorTextStyle(fontSize: 16)),
