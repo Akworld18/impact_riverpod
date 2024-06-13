@@ -11,7 +11,7 @@ part 'mentor_provider.g.dart';
 Future<MentorAllModel> getAllMentors(GetAllMentorsRef ref) async {
   // Using package:http, we fetch a random activity from the Bored API.
   Response response = await http.post(
-      body: {"search_text": "An"},
+      body: {"search_text": "sasa"},
       Uri.parse(
           'https://mentorship-0j2u.onrender.com/api/v1/mentorship/mentor/all'));
 
