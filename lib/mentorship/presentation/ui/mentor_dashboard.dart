@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:impact_mentor/mentorship/data/provider/mentor_provider.dart';
@@ -25,6 +27,8 @@ class _MentorDashboardState extends State<MentorDashboard> {
     super.initState();
   }
 
+  String searchName = "";
+
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
@@ -36,9 +40,16 @@ class _MentorDashboardState extends State<MentorDashboard> {
           Icons.arrow_back,
           color: Colors.white,
         ),
-        title: Text(
-          "Mentors",
-          style: AppStyles().mentorTitleColorTextStyle(fontSize: 22),
+        title: GestureDetector(
+          onTap: () {
+            setState(() {
+              searchName = "NAME";
+            });
+          },
+          child: Text(
+            "Mentors",
+            style: AppStyles().mentorTitleColorTextStyle(fontSize: 22),
+          ),
         ),
         actions: [
           Padding(
@@ -84,6 +95,12 @@ class _MentorDashboardState extends State<MentorDashboard> {
                     child: TextFormField(
                       style: AppStyles().whiteTextStyle(fontSize: 16),
                       controller: controller,
+                      onChanged: (value) {
+                        setState(() {
+                          searchName = value;
+                          log(value.toString());
+                        });
+                      },
                       decoration: InputDecoration(
                           border: InputBorder.none,
                           // suffixIcon: Image.asset("assets/images/filter.png"),
@@ -132,7 +149,7 @@ class _MentorDashboardState extends State<MentorDashboard> {
           Consumer(
             builder: (BuildContext context, WidgetRef ref, Widget? child) {
               final AsyncValue<MentorAllModel> activity =
-                  ref.watch(getAllMentorsProvider);
+                  ref.watch(getAllMentorsProvider(searchName));
               // log(activity.value!.responseData.length.toString());
               if (activity.isLoading) {
                 return const MentorLoader();
