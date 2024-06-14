@@ -1,11 +1,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:impact_mentor/mentorship/data/repository/mentor_repository.dart';
+import 'package:impact_mentor/mentorship/domain/model/session_availability.dart';
 import 'package:impact_mentor/mentorship/presentation/utils/app_colors.dart';
 import 'package:impact_mentor/mentorship/presentation/utils/custom_bottom.dart';
 import 'package:impact_mentor/mentorship/presentation/utils/custom_text.dart';
 import 'package:impact_mentor/mentorship/presentation/utils/textstyles.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 class BookSession extends StatefulWidget {
   const BookSession({super.key});
@@ -17,6 +20,18 @@ class BookSession extends StatefulWidget {
 class _BookSessionState extends State<BookSession> {
   int selectIndex = 0;
   int selectTime = 0;
+
+
+  // Create a DateFormat object
+  DateFormat formatter = DateFormat('d MMM');
+  DateFormat weekNameFormatter = DateFormat('EEE');
+  DateFormat inputFormat = DateFormat('hh:mm a');
+  DateFormat outputFormat = DateFormat('HH:mm');
+
+  List<String> timeSlots = [];
+
+  String selectedDate = "";
+  String selectedTime = "";
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
@@ -34,6 +49,7 @@ class _BookSessionState extends State<BookSession> {
       ),
       body: SingleChildScrollView(
         child:Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.only(left: 19,top: 25),
@@ -48,90 +64,206 @@ class _BookSessionState extends State<BookSession> {
                   SizedBox(height: 20),
                   CustomText().userProfile(),
                   SizedBox(height: 25),
-                  Text("Next available session",style: AppStyles().hintColorTextStyle(fontSize: 14),),
-                  SizedBox(height: 17),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        for(int i=0;i<6;i++)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 14),
-                          child: GestureDetector(
-                            onTap: (){
-                              setState(() {
-                                selectIndex=i;
-                              });
-                            },
-                            child:Container(
-                              height: 100,
-                              width: size.width *24/100,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(11),
-                                border: Border.all(color:selectIndex==i?bookingButtonColor:availableSessionBorder),
-                                color: searchButtonBackground
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Text("WED",style: AppStyles().hintColorTextStyle(fontSize: 10),),
-                                  Text("30 May",style: AppStyles().monthTextStyle(fontSize: 14),),
-                                  Text("2 slots",style: AppStyles().slotsTextStyle(),),
-                                ],
-                              ),
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 25),
-                  Text("Available time slots",style: AppStyles().customColorStyle(color: hintTextColor.withOpacity(0.7)),),
-                  Text("In your local timezone (Asia/Calcutta)",style: AppStyles().hintColorTextStyle(fontSize: 14),),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 10,top: 17),
-                    child: Row(
-                      children: [
-                        Flexible(child: Wrap(
-                          children: [
-                            for(int i=0;i<5;i++)
-                              Padding(
-                                padding: const EdgeInsets.only(right: 10,bottom: 16),
-                                child: GestureDetector(
-                                  onTap: (){
-                                    setState(() {
-                                      selectTime=i;
-                                    });
-                                  },
-                                  child: Container(
-                                    height:40 ,
-                                    width: size.width * 28/100,
-                                    decoration: BoxDecoration(
-                                      color: selectTime==i?bookingButtonColor:Colors.transparent,
-                                        border: Border.all(color:selectTime==i?bookingButtonColor:timeBorder),
-                                        borderRadius: BorderRadius.circular(8)
-                                    ),
-                                    child: Center(
-                                      child: Text("12:00 PM",style:selectTime==i?AppStyles().categoryColorStyle(): AppStyles().hintColor500TextStyle(fontSize: 14),),
-                                    ),
-                                  ),
-                                ),
-                              )
-                          ],
-                        ))
-                      ],
-                    ),
-                  ),
-
                 ],
               ),
             ),
-            SizedBox(height: 80),
-            CustomBottom().bottomRow(
-                width: 38, buttonTitle: "Next", title: "Next available", value: "30 May,2024, 11:00 PM")
+            Consumer(builder: (BuildContext context, WidgetRef ref, Widget? child) {
+              final AsyncValue<MentorSessionResponse> checkActivity = ref.watch(getSessionRequestProvider('8319bf55-3040-4d3e-b671-17eadf3be79c'));
+              if(checkActivity.isLoading){
+                return MentorLoader();
+              }
+              else if(checkActivity.hasValue){
+                List <SessionDayAvailableModel>sessionDayList  = [];
+                print(checkActivity.value?.data.toString());
+                DateTime serverDate = DateTime.parse(checkActivity.value?.data.responseData.server_time.toString().split('T').first ?? "");
+                String formattedDate = formatter.format(serverDate);
+                String weekName = weekNameFormatter.format(serverDate);
+                sessionDayList.add(SessionDayAvailableModel(dayMonth: formattedDate, dayName: weekName, originalDate: serverDate));
+                for(int i=0;i<6;i++){
+                  serverDate = serverDate.add(Duration(days: 1));
+                  String formatAddedDate = formatter.format(serverDate);
+                  String addedWeekName = weekNameFormatter.format(serverDate);
+                  sessionDayList.add(SessionDayAvailableModel(dayMonth: formatAddedDate, dayName: addedWeekName, originalDate: serverDate));
+                }
+
+                getTimeSlots(0,sessionDayList,checkActivity.value!.data.responseData.availability);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 19,top: 25),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Next available session",style: AppStyles().hintColorTextStyle(fontSize: 14),),
+                          SizedBox(height: 17),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                for(int i=0;i<sessionDayList.length;i++)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 14),
+                                    child: GestureDetector(
+                                      onTap: (){
+                                        setState(() {
+                                          selectIndex=i;
+                                          timeSlots=[];
+                                          selectedDate = "${sessionDayList[i].dayMonth},${sessionDayList[i].originalDate.year}";
+                                          getTimeSlots(selectIndex,sessionDayList,checkActivity.value!.data.responseData.availability);
+                                        });
+                                      },
+                                      child:Container(
+                                        height: 100,
+                                        width: size.width *24/100,
+                                        decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(11),
+                                            border: Border.all(color:selectIndex==i?bookingButtonColor:availableSessionBorder),
+                                            color: searchButtonBackground
+                                        ),
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                          children: [
+                                            Text(sessionDayList[i].dayName.toString().toUpperCase(),style: AppStyles().hintColorTextStyle(fontSize: 10),),
+                                            Text(sessionDayList[i].dayMonth.toString(),style: AppStyles().monthTextStyle(fontSize: 14),),
+                                            // Text("2 slots",style: AppStyles().slotsTextStyle(),),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 25),
+                          Text("Available time slots",style: AppStyles().customColorStyle(color: hintTextColor.withOpacity(0.7)),),
+                          Text("In your local timezone (Asia/Calcutta)",style: AppStyles().hintColorTextStyle(fontSize: 14),),
+                          Padding(
+                            padding: const EdgeInsets.only(right: 10,top: 17),
+                            child: Row(
+                              children: [
+                                Flexible(child: Wrap(
+                                  children: [
+                                    for(int i=0;i<timeSlots.length;i++)
+                                      Padding(
+                                        padding: const EdgeInsets.only(right: 10,bottom: 16),
+                                        child: GestureDetector(
+                                          onTap: (){
+                                            setState(() {
+                                              selectTime=i;
+                                              selectedTime = timeSlots[i].toUpperCase().toString();
+                                            });
+                                          },
+                                          child: Container(
+                                            height:40 ,
+                                            width: size.width * 28/100,
+                                            decoration: BoxDecoration(
+                                                color: selectTime==i?bookingButtonColor:Colors.transparent,
+                                                border: Border.all(color:selectTime==i?bookingButtonColor:timeBorder),
+                                                borderRadius: BorderRadius.circular(8)
+                                            ),
+                                            child: Center(
+                                              child: Text(timeSlots[i].toUpperCase().toString(),style:selectTime==i?AppStyles().categoryColorStyle(): AppStyles().hintColor500TextStyle(fontSize: 14),),
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                  ],
+                                ))
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 120),
+                        ],
+                      ),
+                    ),
+                    sessionDayList.isEmpty || timeSlots.isEmpty
+                        ?SizedBox()
+                        :CustomBottom().bottomRow(
+                        width: 38, buttonTitle: "Next", title: "Next available", value: "${sessionDayList[selectIndex].dayMonth},${sessionDayList[selectIndex].originalDate.year},${timeSlots[selectTime]}")
+                  ],
+                );
+              }
+              else {
+                return Center(child: Text("Error"));
+              }
+
+            },),
+
           ],
         ),
       ),
+
     );
   }
+
+
+  getTimeSlots(int index,List<SessionDayAvailableModel> sessionList,MentorAvailability availability ){
+    List<MentorAvailabilityDates>? availableDay = getAvailableDayList(sessionList[index].dayName.toUpperCase(),availability);
+
+    if(availableDay!.isNotEmpty){
+      DateTime start12 = inputFormat.parse(availableDay.first.start_time.toString());
+      String start24 = outputFormat.format(start12);
+      DateTime end12 = inputFormat.parse(availableDay.first.end_time.toString());
+      String end24 = outputFormat.format(end12);
+      generateTimeSlots(sessionList[index].originalDate,start24,end24);
+    }
+
+
+  }
+
+
+
+  generateTimeSlots(DateTime date,String start,String end){
+    DateTime startTime = DateTime(date.year, date.month, date.day, int.parse(start.toString().split(":").first), int.parse(start.toString().split(":").last)); // 4:30 PM on June 13, 2024
+    DateTime endTime = DateTime(date.year, date.month, date.day, int.parse(end.toString().split(":").first), int.parse(end.toString().split(":").last)); // 12:30 AM on June 14, 2024
+
+    // Create a DateFormat object for displaying the time
+    DateFormat timeFormatter = DateFormat('hh:mm a');
+
+    // Generate time slots
+    DateTime currentTime = startTime;
+
+    while (currentTime.isBefore(endTime) || currentTime.isAtSameMomentAs(endTime)) {
+      setState(() {
+        timeSlots.add(timeFormatter.format(currentTime));
+        currentTime = currentTime.add(Duration(minutes: 30));
+      });      
+    }
+    setState(() {
+      selectedTime = timeSlots[0].toUpperCase().toString();
+    });
+  }
+
+  List<MentorAvailabilityDates>? getAvailableDayList(String weekName,MentorAvailability availability ){
+    switch(weekName) {
+      case "THU":
+        return availability.thursday;
+      case  "FRI":
+        return availability.friday;
+      case "SAT":
+        return availability.saturday;
+      case "SUN":
+        return availability.sunday;
+      case "MON":
+        return availability.monday;
+      case "TUE":
+        return availability.tuesday;
+      case "WED":
+        return availability.wednesday;
+      default:
+        return [];
+    }
+
+  }
+}
+
+
+
+
+class SessionDayAvailableModel{
+  String dayName;
+  String dayMonth;
+  DateTime originalDate;
+  SessionDayAvailableModel({required this.dayMonth,required this.dayName,required this.originalDate});
 }
