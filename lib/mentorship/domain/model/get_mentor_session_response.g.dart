@@ -24,10 +24,8 @@ GetMentorSessionDataModel _$GetMentorSessionDataModelFromJson(
         Map<String, dynamic> json) =>
     GetMentorSessionDataModel(
       json['message'] as String? ?? '',
-      (json['responseData'] as List<dynamic>)
-          .map((e) => GetMentorSessionResponseDataModel.fromJson(
-              e as Map<String, dynamic>))
-          .toList(),
+      GetMentorSessionResponseData.fromJson(
+          json['responseData'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$GetMentorSessionDataModelToJson(
@@ -35,6 +33,21 @@ Map<String, dynamic> _$GetMentorSessionDataModelToJson(
     <String, dynamic>{
       'message': instance.message,
       'responseData': instance.responseData,
+    };
+
+GetMentorSessionResponseData _$GetMentorSessionResponseDataFromJson(
+        Map<String, dynamic> json) =>
+    GetMentorSessionResponseData(
+      (json['datas'] as List<dynamic>)
+          .map((e) => GetMentorSessionResponseDataModel.fromJson(
+              e as Map<String, dynamic>))
+          .toList(),
+    );
+
+Map<String, dynamic> _$GetMentorSessionResponseDataToJson(
+        GetMentorSessionResponseData instance) =>
+    <String, dynamic>{
+      'datas': instance.datas,
     };
 
 GetMentorSessionResponseDataModel _$GetMentorSessionResponseDataModelFromJson(

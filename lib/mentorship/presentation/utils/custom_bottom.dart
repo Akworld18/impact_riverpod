@@ -6,7 +6,7 @@ import 'app_colors.dart';
 import 'customBox.dart';
 
 class CustomBottom{
-  bottomRow({required double width,required String buttonTitle,required String title,required String value}){
+  bottomRow({required double width,required String buttonTitle,required String title,required String value,required GestureTapCallback? onTap,}){
     return  Container(
       height: 70,
       width: double.infinity,color: Color(0xff191C1F),
@@ -25,7 +25,7 @@ class CustomBottom{
               ],
             ),
             Padding(padding: EdgeInsets.only(top: 14,bottom: 14),
-              child:CustomBox().sessionButton(height: 10, width: width, onTap: (){},title: buttonTitle),
+              child:CustomBox().sessionButton(height: 10, width: width, onTap:onTap,title: buttonTitle),
             )
           ],
         ) ,

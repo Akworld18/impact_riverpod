@@ -19,13 +19,25 @@ class GetMentorSessionResponse {
 class GetMentorSessionDataModel {
   @JsonKey(defaultValue: '')
   String? message;
-  List<GetMentorSessionResponseDataModel> responseData;
+  final GetMentorSessionResponseData responseData;
 
   GetMentorSessionDataModel(this.message, this.responseData);
 
   factory GetMentorSessionDataModel.fromJson(Map<String, dynamic> json) =>
       _$GetMentorSessionDataModelFromJson(json);
   Map<String, dynamic> toJson() => _$GetMentorSessionDataModelToJson(this);
+}
+
+
+@JsonSerializable()
+class GetMentorSessionResponseData {
+  List<GetMentorSessionResponseDataModel> datas;
+
+  GetMentorSessionResponseData(this.datas,);
+
+  factory GetMentorSessionResponseData.fromJson(Map<String, dynamic> json) =>
+      _$GetMentorSessionResponseDataFromJson(json);
+  Map<String, dynamic> toJson() => _$GetMentorSessionResponseDataToJson(this);
 }
 
 @JsonSerializable()

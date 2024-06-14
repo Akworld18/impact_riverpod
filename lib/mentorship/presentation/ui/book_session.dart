@@ -2,7 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:impact_mentor/mentorship/data/repository/mentor_repository.dart';
+import 'package:impact_mentor/mentorship/domain/model/booking_saved_response.dart';
+import 'package:impact_mentor/mentorship/domain/model/get_mentor_session_response.dart';
+import 'package:impact_mentor/mentorship/domain/model/mentor_all_response.dart';
+import 'package:impact_mentor/mentorship/domain/model/saveBooking_body_model.dart';
 import 'package:impact_mentor/mentorship/domain/model/session_availability.dart';
+import 'package:impact_mentor/mentorship/presentation/ui/booking_confirmed.dart';
 import 'package:impact_mentor/mentorship/presentation/utils/app_colors.dart';
 import 'package:impact_mentor/mentorship/presentation/utils/custom_bottom.dart';
 import 'package:impact_mentor/mentorship/presentation/utils/custom_text.dart';
@@ -11,7 +16,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 class BookSession extends StatefulWidget {
-  const BookSession({super.key});
+  final MentorResponseDataModel? mentorResponseDataModel;
+  final GetMentorSessionResponseDataModel? getMentorSessionResponseDataModel;
+  const BookSession({super.key, this.mentorResponseDataModel, this.getMentorSessionResponseDataModel});
 
   @override
   State<BookSession> createState() => _BookSessionState();
@@ -27,7 +34,8 @@ class _BookSessionState extends State<BookSession> {
   DateFormat weekNameFormatter = DateFormat('EEE');
   DateFormat inputFormat = DateFormat('hh:mm a');
   DateFormat outputFormat = DateFormat('HH:mm');
-
+  ScrollController scrollController = ScrollController();
+  bool buttonLoader = false;
   List<String> timeSlots = [];
 
   String selectedDate = "";
@@ -39,7 +47,11 @@ class _BookSessionState extends State<BookSession> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        leading: Icon(Icons.close,color: Colors.white,size: 32,),
+        leading: GestureDetector(
+          onTap: (){
+            Navigator.pop(context);
+          },
+            child:Icon(Icons.close,color: Colors.white,size: 32,)),
         title: Text("Book Session",style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w400,
@@ -48,6 +60,7 @@ class _BookSessionState extends State<BookSession> {
         ),),
       ),
       body: SingleChildScrollView(
+        controller: scrollController,
         child:Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -57,18 +70,40 @@ class _BookSessionState extends State<BookSession> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text("Session duration",style: AppStyles().hintColorTextStyle(fontSize: 14),),
-                  Text("30 Mins",style: AppStyles().mentorTitleColorTextStyle(fontSize: 14),),
+                  Text("${widget.getMentorSessionResponseDataModel?.session_duration.toString() ?? ""} Mins",style: AppStyles().mentorTitleColorTextStyle(fontSize: 14),),
                   SizedBox(height: 25),
                   Text("About",style: AppStyles().hintColorTextStyle(fontSize: 14),),
-                  Text("Resume & Portfolio review",style: AppStyles().mentorTitleColorTextStyle(fontSize: 14),),
+                  Text(widget.getMentorSessionResponseDataModel?.session_name.toString() ?? "",style: AppStyles().mentorTitleColorTextStyle(fontSize: 14),),
                   SizedBox(height: 20),
-                  CustomText().userProfile(),
+                  CustomText().userProfile(decorationImage:  widget.mentorResponseDataModel
+                      ?.profile_picture ==
+                      ''?ClipRRect(
+                      borderRadius: BorderRadius.circular(100),
+                      child:Image.asset( height: 50,
+                          width: 50,
+                          "assets/images/mentor.png",fit: BoxFit.contain))
+                      :ClipRRect(
+                    borderRadius: BorderRadius.circular(100),
+                    child: Image.network( height: 50,
+                      width: 50,
+                      widget.mentorResponseDataModel?.profile_picture ?? '',fit: BoxFit.contain,
+                      errorBuilder: (context,st,s){
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(100),
+                          child:Image.asset(
+                              height: 50,
+                              width: 50,
+                              "assets/images/mentor.png",fit: BoxFit.cover),
+                        );
+                      },),
+                  ),
+                      name: "${widget.mentorResponseDataModel?.first_name} ${widget.mentorResponseDataModel?.last_name}",job: "${widget.mentorResponseDataModel?.current_position} at ${widget.mentorResponseDataModel?.company}"),
                   SizedBox(height: 25),
                 ],
               ),
             ),
             Consumer(builder: (BuildContext context, WidgetRef ref, Widget? child) {
-              final AsyncValue<MentorSessionResponse> checkActivity = ref.watch(getSessionRequestProvider('8319bf55-3040-4d3e-b671-17eadf3be79c'));
+              final AsyncValue<MentorSessionResponse> checkActivity = ref.watch(getSessionRequestProvider(widget.getMentorSessionResponseDataModel?.session_id.toString() ?? ""));
               if(checkActivity.isLoading){
                 return MentorLoader();
               }
@@ -108,6 +143,7 @@ class _BookSessionState extends State<BookSession> {
                                       onTap: (){
                                         setState(() {
                                           selectIndex=i;
+                                          selectTime=0;
                                           timeSlots=[];
                                           selectedDate = "${sessionDayList[i].dayMonth},${sessionDayList[i].originalDate.year}";
                                           getTimeSlots(selectIndex,sessionDayList,checkActivity.value!.data.responseData.availability);
@@ -179,7 +215,20 @@ class _BookSessionState extends State<BookSession> {
                     ),
                     sessionDayList.isEmpty || timeSlots.isEmpty
                         ?SizedBox()
-                        :CustomBottom().bottomRow(
+                        :buttonLoader?Center(child: CircularProgressIndicator(),):CustomBottom().bottomRow(onTap: (){
+                          setState(() {
+                            buttonLoader = true;
+                          });
+                      ref.read(saveBookingDetailsProvider(SaveBookingModel(
+                              bookingTime: "${sessionDayList[selectIndex].originalDate.toString().split(" ").first}T${change12to24Format(timeSlots[selectTime])}:00Z",
+                              mentorId: widget.mentorResponseDataModel!.mentor_user_id.toString(),
+                              menteeId: 'auth0|65954d18ccd3220acff27ec7',
+                              sessionId: widget.getMentorSessionResponseDataModel?.session_id.toString() ?? ""
+                          ),context,"${sessionDayList[selectIndex].dayName},${sessionDayList[selectIndex].dayMonth}","${timeSlots[selectTime]} - ${addTimeSlots(timeSlots[selectTime])}",widget.mentorResponseDataModel));
+                      setState(() {
+                        buttonLoader=false;
+                      });
+                    },
                         width: 38, buttonTitle: "Next", title: "Next available", value: "${sessionDayList[selectIndex].dayMonth},${sessionDayList[selectIndex].originalDate.year},${timeSlots[selectTime]}")
                   ],
                 );
@@ -197,6 +246,22 @@ class _BookSessionState extends State<BookSession> {
     );
   }
 
+
+  String addTimeSlots(String time){
+    DateFormat inputFormat = DateFormat('hh:mm a');
+    DateTime dateTime = inputFormat.parse(time);
+    DateTime newDateTime = dateTime.add(Duration(minutes: 30));
+    DateFormat outputFormat = DateFormat('hh:mm a');
+    String newTime12Hour = outputFormat.format(newDateTime);
+
+    return newTime12Hour; // Output: 05:29 PM
+  }
+
+  String change12to24Format(String time){
+    DateTime start12 = inputFormat.parse(time);
+    String start24 = outputFormat.format(start12);
+    return start24.toString();
+  }
 
   getTimeSlots(int index,List<SessionDayAvailableModel> sessionList,MentorAvailability availability ){
     List<MentorAvailabilityDates>? availableDay = getAvailableDayList(sessionList[index].dayName.toUpperCase(),availability);
@@ -227,12 +292,17 @@ class _BookSessionState extends State<BookSession> {
     while (currentTime.isBefore(endTime) || currentTime.isAtSameMomentAs(endTime)) {
       setState(() {
         timeSlots.add(timeFormatter.format(currentTime));
-        currentTime = currentTime.add(Duration(minutes: 30));
+        currentTime = currentTime.add(Duration(minutes: widget.getMentorSessionResponseDataModel!.session_duration!.toInt()));
       });      
     }
     setState(() {
       selectedTime = timeSlots[0].toUpperCase().toString();
+      scrollController.animateTo(
+          scrollController.position.maxScrollExtent + 1000,
+          duration: Duration(milliseconds: 5),
+          curve: Curves.fastOutSlowIn);
     });
+
   }
 
   List<MentorAvailabilityDates>? getAvailableDayList(String weekName,MentorAvailability availability ){

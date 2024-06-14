@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:impact_mentor/mentorship/data/provider/mentor_provider.dart';
+import 'package:impact_mentor/mentorship/data/repository/mentor_repository.dart';
 import 'package:impact_mentor/mentorship/domain/model/get_mentor_session_response.dart';
 import 'package:impact_mentor/mentorship/domain/model/mentor_all_response.dart';
+import 'package:impact_mentor/mentorship/presentation/ui/book_session.dart';
 import 'package:impact_mentor/mentorship/presentation/utils/app_colors.dart';
 import 'package:impact_mentor/mentorship/presentation/utils/customBox.dart';
 import 'package:impact_mentor/mentorship/presentation/utils/custom_bottom.dart';
@@ -34,6 +36,8 @@ class _MentorProfileState extends State<MentorProfile> {
     // 'assets/images/behance.png',
     // 'assets/images/dribble.png'
   ];
+
+  ScrollController scrollController = ScrollController();
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
@@ -69,6 +73,7 @@ class _MentorProfileState extends State<MentorProfile> {
         ],
       ),
       body: SingleChildScrollView(
+        controller: scrollController,
         child: Column(
           children: [
             Container(
@@ -84,18 +89,9 @@ class _MentorProfileState extends State<MentorProfile> {
                         height: 102,
                         width: double.infinity,
                         decoration: BoxDecoration(
-                            image: widget.mentorResponseDataModel
-                                        ?.profile_picture ==
-                                    ''
-                                ? const DecorationImage(
+                            image: const DecorationImage(
                                     image: AssetImage(
                                         'assets/images/background.png'),
-                                    fit: BoxFit.cover)
-                                : DecorationImage(
-                                    image: NetworkImage(widget
-                                            .mentorResponseDataModel
-                                            ?.profile_picture ??
-                                        ''),
                                     fit: BoxFit.cover)),
                       ),
                       Positioned(
@@ -104,14 +100,45 @@ class _MentorProfileState extends State<MentorProfile> {
                         child: Container(
                           height: 96,
                           width: 96,
-                          decoration: const BoxDecoration(
+                          decoration:  BoxDecoration(
                               shape: BoxShape.circle,
                               color: Colors.green,
-                              image: DecorationImage(
+                              image: widget.mentorResponseDataModel
+                                  ?.profile_picture ==
+                                  ''
+                                  ?DecorationImage(
                                   image: AssetImage("assets/images/mentor.png"),
-                                  fit: BoxFit.cover)),
+                                  fit: BoxFit.cover)
+                                  :DecorationImage(
+                                  image: NetworkImage(widget
+                                      .mentorResponseDataModel
+                                      ?.profile_picture ??
+                                      '')
+                          ),
                         ),
-                      )
+                          child:widget.mentorResponseDataModel
+                              ?.profile_picture ==
+                              ''?ClipRRect(
+                              borderRadius: BorderRadius.circular(100),
+                              child:Image.asset( height: 96,
+                                  width: 96,
+                                  "assets/images/mentor.png",fit: BoxFit.contain))
+                          :ClipRRect(
+                            borderRadius: BorderRadius.circular(100),
+                            child: Image.network( height: 96,
+                              width: 96,
+                              widget.mentorResponseDataModel?.profile_picture ?? '',fit: BoxFit.contain,
+                              errorBuilder: (context,st,s){
+                                return ClipRRect(
+                                  borderRadius: BorderRadius.circular(100),
+                                  child:Image.asset(
+                                      height: 96,
+                                      width: 96,
+                                      "assets/images/mentor.png",fit: BoxFit.cover),
+                                );
+                              },),
+                          ),
+                      )),
                     ],
                   ),
                   const SizedBox(height: 60),
@@ -377,12 +404,13 @@ class _MentorProfileState extends State<MentorProfile> {
                           return Expanded(
                             child: SizedBox(
                               child: GridView.builder(
+                                controller: scrollController,
                                   shrinkWrap: true,
                                   itemCount:
-                                      activity.value!.responseData.length,
+                                      activity.value!.responseData.datas.length,
                                   gridDelegate:
                                       const SliverGridDelegateWithFixedCrossAxisCount(
-                                          mainAxisExtent: 200,
+                                          mainAxisExtent: 240,
                                           mainAxisSpacing: 12,
                                           crossAxisSpacing: 14,
                                           crossAxisCount: 2),
@@ -418,7 +446,7 @@ class _MentorProfileState extends State<MentorProfile> {
                                                                   .only(
                                                                   right: 13),
                                                           child: Text(
-                                                            "${activity.value?.responseData[index].session_duration.toString()} min",
+                                                            "${activity.value?.responseData.datas[index].session_duration.toString()} min",
                                                             style: AppStyles()
                                                                 .hintColorTextStyle(
                                                                     fontSize:
@@ -431,7 +459,7 @@ class _MentorProfileState extends State<MentorProfile> {
                                                     Text(
                                                       activity
                                                               .value
-                                                              ?.responseData[
+                                                              ?.responseData.datas[
                                                                   index]
                                                               .session_name ??
                                                           '',
@@ -439,21 +467,29 @@ class _MentorProfileState extends State<MentorProfile> {
                                                           .nameInCardStyle(
                                                               fontSize: 16),
                                                     ),
-                                                    Text(
-                                                      activity
-                                                              .value
-                                                              ?.responseData[
-                                                                  index]
-                                                              .sessio_dscription ??
-                                                          '',
-                                                      maxLines: 2,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                      style: AppStyles()
-                                                          .hintColorTextStyle(
-                                                              fontSize: 12),
+                                                    activity
+                                                        .value
+                                                        !.responseData.datas[
+                                                    index]
+                                                        .sessio_dscription!.isEmpty
+                                                    ?SizedBox(height: 26,)
+                                                    :Padding(
+                                                      padding: const EdgeInsets.only(bottom: 8),
+                                                      child: Text(
+                                                        activity
+                                                                .value
+                                                                ?.responseData.datas[
+                                                                    index]
+                                                                .sessio_dscription ??
+                                                            '',
+                                                        maxLines: 2,
+                                                        overflow:
+                                                            TextOverflow.ellipsis,
+                                                        style: AppStyles()
+                                                            .hintColorTextStyle(
+                                                                fontSize: 12),
+                                                      ),
                                                     ),
-                                                    SizedBox(height: 8),
                                                     // Row(
                                                     //   crossAxisAlignment:
                                                     //       CrossAxisAlignment
@@ -486,7 +522,7 @@ class _MentorProfileState extends State<MentorProfile> {
                                                     //   ],
                                                     // ),
                                                     Text(
-                                                      '\u{20B9} ${activity.value?.responseData[index].price ?? ''}',
+                                                      '\u{20B9} ${activity.value?.responseData.datas[index].price ?? ''}',
                                                       style: AppStyles()
                                                           .valueInCardStyle(),
                                                     ),
@@ -498,13 +534,14 @@ class _MentorProfileState extends State<MentorProfile> {
                                           Column(
                                             children: [
                                               Container(
-                                                padding: const EdgeInsets.only(
-                                                    left: 8, right: 8),
+                                                padding: const EdgeInsets.only(left: 8, right: 8),
                                                 child: CustomBox()
                                                     .sessionButton(
                                                         height: 3,
                                                         width: 9,
-                                                        onTap: () {},
+                                                        onTap: () {
+                                                          Navigator.push(context, MaterialPageRoute(builder: (context)=>BookSession(getMentorSessionResponseDataModel:activity.value?.responseData.datas[index] ,mentorResponseDataModel: widget.mentorResponseDataModel,)));
+                                                        },
                                                         title: "Book Session"),
                                               ),
                                               const SizedBox(height: 10)
@@ -525,49 +562,49 @@ class _MentorProfileState extends State<MentorProfile> {
                 ),
               ),
             ),
-            SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              color: Color(0xff191C1F),
-              child: Padding(
-                padding: const EdgeInsets.only(left: 18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 14),
-                    Text(
-                      "How to work with me",
-                      style:
-                          AppStyles().sessionTitleColorTextStyle(fontSize: 16),
-                    ),
-                    SizedBox(height: 22),
-                    for (int i = 0; i < 3; i++)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('What i can offer?',
-                                style: AppStyles()
-                                    .sessionTitleColorTextStyle(fontSize: 16)),
-                            SizedBox(height: 4),
-                            Text(
-                                'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed voluptua. ',
-                                style: AppStyles()
-                                    .hintColorTextStyle(fontSize: 12)),
-                          ],
-                        ),
-                      )
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 90),
-            CustomBottom().bottomRow(
-                width: 24,
-                buttonTitle: "Check availibitly",
-                title: "Next available",
-                value: "30 May,2024, 11:00 PM")
+            // SizedBox(height: 50),
+            // Container(
+            //   width: double.infinity,
+            //   color: Color(0xff191C1F),
+            //   child: Padding(
+            //     padding: const EdgeInsets.only(left: 18),
+            //     child: Column(
+            //       crossAxisAlignment: CrossAxisAlignment.start,
+            //       children: [
+            //         SizedBox(height: 14),
+            //         Text(
+            //           "How to work with me",
+            //           style:
+            //               AppStyles().sessionTitleColorTextStyle(fontSize: 16),
+            //         ),
+            //         SizedBox(height: 22),
+            //         for (int i = 0; i < 3; i++)
+            //           Padding(
+            //             padding: const EdgeInsets.only(bottom: 12),
+            //             child: Column(
+            //               crossAxisAlignment: CrossAxisAlignment.start,
+            //               children: [
+            //                 Text('What i can offer?',
+            //                     style: AppStyles()
+            //                         .sessionTitleColorTextStyle(fontSize: 16)),
+            //                 SizedBox(height: 4),
+            //                 Text(
+            //                     'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed voluptua. ',
+            //                     style: AppStyles()
+            //                         .hintColorTextStyle(fontSize: 12)),
+            //               ],
+            //             ),
+            //           )
+            //       ],
+            //     ),
+            //   ),
+            // ),
+            // SizedBox(height: 90),
+            // CustomBottom().bottomRow(
+            //     width: 24,
+            //     buttonTitle: "Check availibitly",
+            //     title: "Next available",
+            //     value: "30 May,2024, 11:00 PM")
           ],
         ),
       ),

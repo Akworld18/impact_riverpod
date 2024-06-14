@@ -1,11 +1,17 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:impact_mentor/mentorship/domain/model/mentor_all_response.dart';
+import 'package:impact_mentor/mentorship/presentation/ui/bookings.dart';
 import 'package:impact_mentor/mentorship/presentation/utils/app_colors.dart';
 import 'package:impact_mentor/mentorship/presentation/utils/customBox.dart';
 import 'package:impact_mentor/mentorship/presentation/utils/custom_text.dart';
 import 'package:impact_mentor/mentorship/presentation/utils/textstyles.dart';
 class BookingConfirmedScreen extends StatefulWidget {
-  const BookingConfirmedScreen({super.key});
+  final MentorResponseDataModel? mentorResponseDataModel;
+  final String bookingTime;
+  final String bookingDate;
+
+  const BookingConfirmedScreen({super.key, this.mentorResponseDataModel, required this.bookingTime, required this.bookingDate});
 
   @override
   State<BookingConfirmedScreen> createState() => _BookingConfirmedScreenState();
@@ -48,7 +54,7 @@ class _BookingConfirmedScreenState extends State<BookingConfirmedScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text('Mentorship session Booking with ',style:AppStyles().customColor12Style(color: timeBorder) ,textAlign: TextAlign.center,),
-                Text("Anna Arteeva diya an",style: AppStyles().customColor12Style(color: sessionButtonColor),textAlign: TextAlign.center,)
+                Text( "${widget.mentorResponseDataModel?.first_name} ${widget.mentorResponseDataModel?.last_name}",style: AppStyles().customColor12Style(color: sessionButtonColor),textAlign: TextAlign.center,)
               ],
             ),
             Row(
@@ -56,11 +62,17 @@ class _BookingConfirmedScreenState extends State<BookingConfirmedScreen> {
               children: [
                 Icon(Icons.calendar_today_outlined,color: confirmTextColor,size: 15,),
                 SizedBox(width: 3),
-                Text('Sat, Jun 28 ',style: AppStyles().customColorStyle(color: confirmTextColor),),
+                Text(widget.bookingDate,style: AppStyles().customColorStyle(color: confirmTextColor),),
+
+              ],
+            ),
+            SizedBox(height: 3),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
                 Icon(Icons.access_time_outlined,color: confirmTextColor,size: 15,),
                 SizedBox(width: 3),
-                Text('4:00 PM  - 5:00 PM IST',style: AppStyles().customColorStyle(color: confirmTextColor),),
-
+                Text('${widget.bookingTime} IST',style: AppStyles().customColorStyle(color: confirmTextColor),),
               ],
             ),
             SizedBox(height: 35),
@@ -68,16 +80,42 @@ class _BookingConfirmedScreenState extends State<BookingConfirmedScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-               CustomText().userProfile(),
+               CustomText().userProfile(decorationImage: widget.mentorResponseDataModel
+                   ?.profile_picture ==
+                   ''?ClipRRect(
+                   borderRadius: BorderRadius.circular(100),
+                   child:Image.asset( height: 50,
+                       width: 50,
+                       "assets/images/mentor.png",fit: BoxFit.contain))
+                   :ClipRRect(
+                 borderRadius: BorderRadius.circular(100),
+                 child: Image.network( height: 50,
+                   width: 50,
+                   widget.mentorResponseDataModel?.profile_picture ?? '',fit: BoxFit.contain,
+                   errorBuilder: (context,st,s){
+                     return ClipRRect(
+                       borderRadius: BorderRadius.circular(100),
+                       child:Image.asset(
+                           height: 50,
+                           width: 50,
+                           "assets/images/mentor.png",fit: BoxFit.cover),
+                     );
+                   },),
+               ),
+                   name:  "${widget.mentorResponseDataModel?.first_name} ${widget.mentorResponseDataModel?.last_name}",job: "${widget.mentorResponseDataModel?.current_position} at ${widget.mentorResponseDataModel?.company}"),
                 CustomBox().chatBox()
               ],
             ),
             SizedBox(height: 120),
-            CustomBox().sessionButton(height: 10, width: 38, onTap: (){}, title: "Manage Bookings")
+            CustomBox().sessionButton(height: 10, width: 38, onTap: (){
+              Navigator.push(context, MaterialPageRoute(builder: (context)=>BookingsScreen()));
+            }, title: "Manage Bookings")
           ],
         ),
       ),
 
     );
   }
+
+
 }

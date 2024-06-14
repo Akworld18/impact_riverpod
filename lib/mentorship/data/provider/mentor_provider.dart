@@ -9,36 +9,6 @@ import 'package:impact_mentor/mentorship/domain/model/get_mentor_session_respons
 import 'package:impact_mentor/mentorship/domain/model/mentor_all_response.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'mentor_provider.g.dart';
-
-@riverpod
-Future<MentorAllModel> getAllMentors(
-    GetAllMentorsRef ref, String searchValue) async {
-  log(searchValue);
-  log('Search Name');
-  // Using package:http, we fetch a random activity from the Bored API.
-  Response response = await http.post(
-      body: jsonEncode({"search_text": searchValue}),
-      Uri.parse(
-          'https://mentorship-0j2u.onrender.com/api/v1/mentorship/mentor/all'));
-
-  final json = jsonDecode(response.body) as Map<String, dynamic>;
-  // Finally, we convert the Map into an Activity instance.
-  return MentorAllResponse.fromJson(json).data;
-}
-
-@riverpod
-Future<GetMentorSessionDataModel> getMentorSessions(
-    GetMentorSessionsRef ref, String mentorId) async {
-  // Using package:http, we fetch a random activity from the Bored API.
-  Response response = await http.get(Uri.parse(
-      'https://mentorship-0j2u.onrender.com/api/v1/mentorship/mentor-sessions?mentor_id=$mentorId'));
-
-  final json = jsonDecode(response.body) as Map<String, dynamic>;
-  // Finally, we convert the Map into an Activity instance.
-  return GetMentorSessionResponse.fromJson(json).data;
-}
-
 
 
 class MentorProvider{
@@ -47,13 +17,13 @@ class MentorProvider{
       {required bool isHeader}) async {
     http.Response response;
 
-    String url = "https://mentorship-0j2u.onrender.com/api/v1/mentorship/$path";
+    String url = "https://cdn.impacteers-club.com/api/mentor-module/v1/mentorship/$path";
     //
     // if (isAbsolutPath == true) {
     //   url = path;
     // }
 
-    String accessToken = "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJYNEZsWkZPNkk4b0hlRFo1dVpPYUxhSW16bC1tRWRLV0pZbzBNdDh2aUVzIn0.eyJleHAiOjE3MTgzMjMzNzQsImlhdCI6MTcxODI4NzM3NCwiYXV0aF90aW1lIjoxNzE4Mjg3Mzc0LCJqdGkiOiI1ZGIyOTA3My04MDEzLTQ5NjYtOGRlZi0yZmEyYzAyMTc5YTgiLCJpc3MiOiJodHRwczovL2tleWNsb2FrLWRldi5pbXBhY3RlZXJzLWNsdWIuY29tL3JlYWxtcy9pbXBhY3RlZXJzLWlhbSIsInN1YiI6IjFhMjRlYjM5LWRlZTEtNGYxZi05ODE3LTg5YmJiZmE2ZmM0NiIsInR5cCI6IkJlYXJlciIsImF6cCI6ImFjY291bnQiLCJub25jZSI6Im5vbmNlMTZkNjhkMDctOTI0NC00ODg0LTkzODQtZTQ5MGJiMTc3MzE4Iiwic2Vzc2lvbl9zdGF0ZSI6IjdhNTE0NmJkLWQ1MGYtNDY0Ny04ODc5LWIyMTM4MjgzZDBjMyIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkZWZhdWx0LXJvbGVzLWltcGFjdGVlcnMtaWFtIiwiVXNlciJdfSwic2NvcGUiOiJlbWFpbCIsInNpZCI6IjdhNTE0NmJkLWQ1MGYtNDY0Ny04ODc5LWIyMTM4MjgzZDBjMyIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZW1haWwiOiJwcmVta3VtYXIuYXI5OUBnbWFpbC5jb20ifQ.P5zlOe8ys0xfhBXY3N3VGV_CoAbGXQLbSEMbMgdHTmGGLTf1z61hxE34uuGIagMME9Cj3Se4uoOTL9RS-fMkYebYsx9vv9whl3aQHTcs2xYwieWwFl7h0Gq_FOo_dT2oN4G2y3zwrgOZvzVTYPEb2es9TbcjKOAsBOJviaESr6jZ4H7-NXLOmxR3DPUM8lh9orWYIFIy-I_SouwauD0L5KeBPXl5rQel6KGfVFgoP2eEHokgBjoSOUCgF687vyZwmK2u-pDPuq2-GthgAEJJ1IgFNnGR_xPUXW6ZWP9YOQ6WeSUet_DlYwvEv7uPUfmIDfAdiPo0vn4BZwMT1eJtOw";
+    String accessToken = "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJYNEZsWkZPNkk4b0hlRFo1dVpPYUxhSW16bC1tRWRLV0pZbzBNdDh2aUVzIn0.eyJleHAiOjE3MTg5NTU4NjgsImlhdCI6MTcxODM1MTA2OCwiYXV0aF90aW1lIjoxNzE4MzQ3Nzc1LCJqdGkiOiIyNDE4MzIzNC1jNzlkLTQzYTEtYTljMS01ZTkzMTNhZmQ3YjEiLCJpc3MiOiJodHRwczovL2tleWNsb2FrLWRldi5pbXBhY3RlZXJzLWNsdWIuY29tL3JlYWxtcy9pbXBhY3RlZXJzLWlhbSIsInN1YiI6ImF1dGgwfDY1OTU0ZDE4Y2NkMzIyMGFjZmYyN2VjNyIsInR5cCI6IkJlYXJlciIsImF6cCI6ImFjY291bnQiLCJub25jZSI6Im5vbmNlNzVlOGNkMmMtZTQ2Yy00NzJmLWJlNDAtMDgzYjVkZWQ0ZTY4Iiwic2Vzc2lvbl9zdGF0ZSI6IjlkZWZmZGQ2LTk3MTUtNGU2MS04YTdiLWU1MzUzYTg5NzVhNyIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJVc2VyIl19LCJzY29wZSI6ImVtYWlsIHByb2ZpbGUiLCJzaWQiOiI5ZGVmZmRkNi05NzE1LTRlNjEtOGE3Yi1lNTM1M2E4OTc1YTciLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsInByZWZlcnJlZF91c2VybmFtZSI6InByZW1rdW1hci5hcitkZXYxQHRpc3RlcHMuY28iLCJnaXZlbl9uYW1lIjoiIiwiZmFtaWx5X25hbWUiOiIiLCJlbWFpbCI6InByZW1rdW1hci5hcitkZXYxQHRpc3RlcHMuY28ifQ.sv-G4tZ6BIk-mKNQmHNlFDCKEYDHZsjc4E0w8z2O9FSznSgztUzKWj33ZY9D2W0IU7xXUwWwtmfuSG5exhT279TrpAQNk0xIaRDaxSV5dw0_S7uk0aEKd-8ItOIHpDgVExHitU0R3QKQ0lr03pJ29avvrVoTDjAw7PN7GJIwLg1LFmg0inuNESiGxyRjRld0L4qCFGwBd-ZRRD_W49JMgx7X3mYnmnb4flvGfxlmAjmX7ymV5Jc3g1rYqUz86KxUEh1pdeyH9oZXmkMUHuOQy45WCs9RlI6qGRlR1G-R5-UEQvWQy1je8TtSMB7FRDifDtdvRIDbiWFHFwNeB_uLSA";
 
     // String? accessToken;
     // try {

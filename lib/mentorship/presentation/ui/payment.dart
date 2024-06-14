@@ -113,7 +113,7 @@ class _ContinuePaymentState extends State<ContinuePayment> {
           ],
         ),
       ),
-      bottomNavigationBar: CustomBottom().bottomRow(
+      bottomNavigationBar: CustomBottom().bottomRow(onTap: (){},
           width: 15, buttonTitle: "Continue payment", title: "Session", value: "30 May,2024, 11:00 PM")
     );
   }
